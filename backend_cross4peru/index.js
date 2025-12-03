@@ -8,6 +8,8 @@ const authRoutes = require('./routes/auth.routes');
 const planesRoutes = require('./routes/planes.routes');
 const usuariosRoutes = require('./routes/usuarios.routes');
 const pagosRoutes = require('./routes/pagos.routes');
+const asistenciasRoutes = require('./routes/asistencias.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +28,8 @@ app.use('/api', authRoutes);
 app.use('/api', planesRoutes);
 app.use('/api', usuariosRoutes);
 app.use('/api', pagosRoutes);
+app.use('/api', asistenciasRoutes);
+app.use('/api', adminRoutes);
 
 // --- INICIAR SERVIDOR ---
 app.listen(PORT, () => {

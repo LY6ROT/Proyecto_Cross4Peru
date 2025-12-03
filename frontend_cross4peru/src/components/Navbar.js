@@ -1,7 +1,9 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import '../App.css'; // Usaremos estilos básicos por ahora
+import '../App.css'; 
+// 1. Importamos la imagen desde la carpeta assets (subimos un nivel con ..)
+import logo from '../assets/logo.png'; 
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
@@ -9,14 +11,20 @@ const Navbar = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/'); // Al salir, lo mandamos al inicio
+        navigate('/'); 
     };
 
     return (
         <nav className="navbar">
             <div className="navbar-logo">
-                {/* Aquí pondrás tu imagen luego */}
-                <h2>Cross4Peru</h2>
+                {/* 2. Reemplazamos el texto H2 por la imagen con un Link al inicio */}
+                <Link to="/">
+                    <img 
+                        src={logo} 
+                        alt="Logo Cross4Peru" 
+                        style={{ height: '60px', objectFit: 'contain' }} 
+                    />
+                </Link>
             </div>
             <ul className="navbar-links">
                 <li><Link to="/">Inicio</Link></li>

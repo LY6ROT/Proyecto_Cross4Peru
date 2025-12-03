@@ -69,6 +69,7 @@ body {
   font-size: 1.5rem;
   margin-bottom: 30px;
   color: #ddd;
+  margin-top: -35px;
 }
 
 .btn-primary, .btn-plan {
@@ -117,18 +118,27 @@ body {
   border-radius: 10px;
   width: 300px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  transition: transform 0.3s;
-  border: 1px solid #333;
+  transition: all 0.3s ease; /* Transición suave */
+  border: 1px solid #333;    /* Borde gris oscuro por defecto para TODOS */
+  position: relative;
 }
 
+/* Efecto al pasar el mouse (para TODOS los planes por igual) */
 .plan-card:hover {
-  transform: translateY(-10px);
-  border-color: var(--primary-red);
+  transform: translateY(-10px) scale(1.03); 
+  border-color: var(--primary-red);         /* Se pone rojo al pasar el mouse */
+  box-shadow: 0 10px 25px rgba(211, 47, 47, 0.3);
 }
 
+/* La clase .plan-pro ya no tiene estilos especiales fijos */
 .plan-pro {
-  border: 2px solid var(--primary-red);
-  transform: scale(1.05); /* Destaca el plan PRO */
+  /* Vacío o simplemente hereda lo de .plan-card */
+}
+
+/* Títulos y Precios */
+.plan-card h3 {
+  margin-top: 0;
+  color: white; /* Color blanco uniforme para el título */
 }
 
 .plan-price {
@@ -143,6 +153,7 @@ body {
   color: var(--text-gray);
 }
 
+/* Lista de beneficios */
 .plan-features {
   list-style: none;
   padding: 0;
@@ -155,6 +166,7 @@ body {
   border-bottom: 1px solid #333;
   color: #ddd;
 }
+
 /* --- Estilos de Autenticación (Login/Registro) --- */
 .auth-container {
   display: flex;
@@ -338,4 +350,195 @@ body {
   text-decoration: none;
   margin-top: 15px;
   font-size: 0.9rem;
+}
+
+/* --- ESTILOS DEL CALENDARIO --- */
+.calendar-container {
+  background-color: #1e1e1e;
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  margin-bottom: 30px;
+  max-width: 400px; /* Tamaño contenido */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.calendar-nav-btn {
+  background: transparent;
+  border: 1px solid #555;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.calendar-nav-btn:hover {
+  background: #333;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr); /* 7 días de la semana */
+  gap: 5px;
+  text-align: center;
+}
+
+.calendar-day-name {
+  color: #888;
+  font-size: 0.8rem;
+  padding-bottom: 10px;
+  font-weight: bold;
+}
+
+.calendar-day {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%; /* Círculos */
+  font-size: 0.9rem;
+  color: #ddd;
+  position: relative;
+}
+
+/* Día Asistido (Verde) */
+.day-attended {
+  background-color: #2ecc71;
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+/* Día Hoy (Borde Rojo) */
+.day-today {
+  border: 2px solid var(--primary-red);
+}
+
+/* Día Vacío (Relleno gris para días pasados sin asistencia - Opcional) */
+.day-missed {
+  color: #555;
+}
+/* --- ESTILOS DE LA SECCIÓN DE CONTACTO (NUEVO) --- */
+
+.contact-section {
+  background-color: #000; /* Fondo negro puro para continuidad */
+  color: white;
+  padding: 60px 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.contact-content-wrapper {
+  display: flex;
+  flex-wrap: wrap; /* Para que en celular se ponga uno abajo del otro */
+  max-width: 1100px;
+  width: 100%;
+  align-items: center;
+  gap: 50px; /* Espacio entre texto e imagen */
+}
+
+/* Columna Izquierda: Info */
+.contact-info {
+  flex: 1;
+  min-width: 300px;
+  text-align: left;
+}
+
+.contact-title {
+  color: #fff;
+  letter-spacing: 3px;
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  border-bottom: 2px solid var(--primary-red);
+  display: inline-block;
+  padding-bottom: 5px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start; /* Alineado arriba para textos largos */
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+}
+
+.contact-item .icon {
+  font-size: 1.5rem;
+  margin-right: 15px;
+  color: var(--primary-red); /* Iconos rojos */
+}
+
+.contact-item a {
+  color: #ddd;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.contact-item a:hover {
+  color: var(--primary-red); /* Al pasar el mouse se pone rojo */
+}
+
+.contact-item p {
+  margin: 0;
+  color: #ddd;
+}
+
+/* Estilo especial para WhatsApp */
+.whatsapp-link {
+  color: #ddd !important; 
+  font-weight: bold !important;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.whatsapp-link:hover {
+  color: var(--primary-red) !important; 
+}
+
+/* Columna Derecha: Imagen */
+.contact-image-container {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  justify-content: center;
+}
+
+.gym-girl-img {
+  width: 100%;
+  max-width: 450px;
+  border-radius: 10px;
+  border: 2px solid #333;
+  box-shadow: 0 10px 30px rgba(211, 47, 47, 0.2); /* Sombra roja sutil */
+  transition: transform 0.3s;
+}
+
+.gym-girl-img:hover {
+  transform: scale(1.02);
+}
+
+/* Ajuste para móviles */
+@media (max-width: 768px) {
+  .contact-content-wrapper {
+    flex-direction: column-reverse; /* Primero imagen, luego texto en celular */
+    text-align: center;
+  }
+  
+  .contact-info {
+    text-align: center;
+  }
+  
+  .contact-item {
+    justify-content: center;
+  }
 }
