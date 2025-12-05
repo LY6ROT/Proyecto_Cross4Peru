@@ -1,32 +1,31 @@
+// Archivo: backend_cross4peru/routes/asistencias.routes.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
 // 1. Verificar si el usuario puede marcar asistencia hoy
-router.get('/asistencia/estado/:usuario_id', async (req, res) => {
+router.get('/asistencia/estado/:cliente_id', async (req, res) => {
     try {
-        const { usuario_id } = req.params;
-        // Fecha de hoy en formato YYYY-MM-DD
+        const { cliente_id } = req.params;
         const hoy = new Date().toISOString().split('T')[0];
 
         // A. Buscar si tiene un plan VÁLIDO PARA HOY
-        // (Activo + No ha vencido + YA EMPEZÓ)
         const [planHoy] = await db.query(`
             SELECT id 
-            FROM inscripciones 
-            WHERE usuario_id = ? 
+            FROM Inscripciones 
+            WHERE cliente_id = ? 
             AND estado = 'activo' 
             AND fecha_fin >= ? 
             AND fecha_inicio_programada <= ?
             LIMIT 1
-        `, [usuario_id, hoy, hoy]);
+        `, [cliente_id, hoy, hoy]);
 
         if (planHoy.length > 0) {
-            // Sí tiene plan para hoy. Ahora revisamos si YA marcó hoy.
+            // Verificar si YA marcó hoy
             const [asistenciaHoy] = await db.query(`
-                SELECT hora_entrada FROM asistencias 
-                WHERE usuario_id = ? AND fecha = ?
-            `, [usuario_id, hoy]);
+                SELECT hora_entrada FROM Asistencias 
+                WHERE cliente_id = ? AND fecha = ?
+            `, [cliente_id, hoy]);
 
             if (asistenciaHoy.length > 0) {
                 return res.json({ 
@@ -35,19 +34,16 @@ router.get('/asistencia/estado/:usuario_id', async (req, res) => {
                     hora: asistenciaHoy[0].hora_entrada 
                 });
             }
-            // Todo limpio: Puede entrar
             return res.json({ puede_marcar: true });
         }
 
-        // --- SI LLEGAMOS AQUÍ, NO PUEDE MARCAR. AVERIGUAMOS POR QUÉ ---
-
-        // B. ¿Tiene un plan que empieza en el FUTURO?
+        // B. ¿Plan Futuro?
         const [planFuturo] = await db.query(`
             SELECT fecha_inicio_programada 
-            FROM inscripciones 
-            WHERE usuario_id = ? AND estado = 'activo' AND fecha_inicio_programada > ?
+            FROM Inscripciones 
+            WHERE cliente_id = ? AND estado = 'activo' AND fecha_inicio_programada > ?
             LIMIT 1
-        `, [usuario_id, hoy]);
+        `, [cliente_id, hoy]);
 
         if (planFuturo.length > 0) {
             return res.json({ 
@@ -57,16 +53,15 @@ router.get('/asistencia/estado/:usuario_id', async (req, res) => {
             });
         }
 
-        // C. ¿Tiene deuda pendiente?
+        // C. ¿Deuda?
         const [deuda] = await db.query(`
-            SELECT id FROM inscripciones WHERE usuario_id = ? AND estado = 'pendiente_pago'
-        `, [usuario_id]);
+            SELECT id FROM Inscripciones WHERE cliente_id = ? AND estado = 'pendiente_pago'
+        `, [cliente_id]);
 
         if (deuda.length > 0) {
             return res.json({ puede_marcar: false, motivo: 'pendiente_pago' });
         }
 
-        // D. No tiene nada
         res.json({ puede_marcar: false, motivo: 'sin_plan' });
 
     } catch (error) {
@@ -75,17 +70,17 @@ router.get('/asistencia/estado/:usuario_id', async (req, res) => {
     }
 });
 
-// 2. Registrar la Asistencia
+// 2. Registrar la Asistencia (Ruta auxiliar, aunque el admin lo hace manual)
 router.post('/asistencia/marcar', async (req, res) => {
     try {
-        const { usuario_id } = req.body;
+        const { cliente_id } = req.body;
         
         await db.query(`
-            INSERT INTO asistencias (usuario_id, fecha, hora_entrada, estado) 
+            INSERT INTO Asistencias (cliente_id, fecha, hora_entrada, estado) 
             VALUES (?, CURRENT_DATE, CURRENT_TIME, 'asistio')
-        `, [usuario_id]);
+        `, [cliente_id]);
 
-        res.json({ mensaje: '¡Asistencia registrada correctamente! A entrenar 💪' });
+        res.json({ mensaje: '¡Asistencia registrada correctamente!' });
 
     } catch (error) {
         console.error(error);
@@ -94,15 +89,15 @@ router.post('/asistencia/marcar', async (req, res) => {
 });
 
 // 3. Obtener Historial
-router.get('/asistencia/historial/:usuario_id', async (req, res) => {
+router.get('/asistencia/historial/:cliente_id', async (req, res) => {
     try {
-        const { usuario_id } = req.params;
+        const { cliente_id } = req.params;
         const [historial] = await db.query(`
             SELECT id, fecha, hora_entrada, estado 
-            FROM asistencias 
-            WHERE usuario_id = ? 
+            FROM Asistencias 
+            WHERE cliente_id = ? 
             ORDER BY fecha DESC, hora_entrada DESC
-        `, [usuario_id]);
+        `, [cliente_id]);
 
         res.json(historial);
     } catch (error) {

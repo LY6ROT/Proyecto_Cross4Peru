@@ -44,7 +44,6 @@ body {
 /* --- Estilos de la Página de INICIO --- */
 .hero-section {
   height: 90vh;
-  /* Puedes cambiar esta URL por una imagen de fondo local tuya */
   background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
   background-size: cover;
   background-position: center;
@@ -118,27 +117,22 @@ body {
   border-radius: 10px;
   width: 300px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  transition: all 0.3s ease; /* Transición suave */
-  border: 1px solid #333;    /* Borde gris oscuro por defecto para TODOS */
+  transition: all 0.3s ease; 
+  border: 1px solid #333;   
   position: relative;
 }
 
 /* Efecto al pasar el mouse (para TODOS los planes por igual) */
 .plan-card:hover {
   transform: translateY(-10px) scale(1.03); 
-  border-color: var(--primary-red);         /* Se pone rojo al pasar el mouse */
+  border-color: var(--primary-red);         
   box-shadow: 0 10px 25px rgba(211, 47, 47, 0.3);
-}
-
-/* La clase .plan-pro ya no tiene estilos especiales fijos */
-.plan-pro {
-  /* Vacío o simplemente hereda lo de .plan-card */
 }
 
 /* Títulos y Precios */
 .plan-card h3 {
   margin-top: 0;
-  color: white; /* Color blanco uniforme para el título */
+  color: white; 
 }
 
 .plan-price {
@@ -172,7 +166,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 80vh; /* Centrado verticalmente */
+  min-height: 80vh; 
   padding: 20px;
 }
 
@@ -181,7 +175,7 @@ body {
   padding: 40px;
   border-radius: 10px;
   width: 100%;
-  max-width: 400px; /* Ancho máximo del formulario */
+  max-width: 400px; 
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   border: 1px solid #333;
   text-align: center;
@@ -217,7 +211,7 @@ body {
   background-color: #2a2a2a;
   color: white;
   font-size: 1rem;
-  box-sizing: border-box; /* Importante para que el padding no rompa el ancho */
+  box-sizing: border-box; 
 }
 
 .form-group input:focus {
@@ -263,9 +257,10 @@ body {
 .auth-footer a:hover {
   text-decoration: underline;
 }
+
 /* --- Botón de Cerrar Sesión --- */
 .btn-logout {
-  background-color: var(--primary-red); /* Usa el rojo de la marca */
+  background-color: var(--primary-red); 
   color: white;
   border: none;
   padding: 8px 16px;
@@ -279,8 +274,9 @@ body {
 }
 
 .btn-logout:hover {
-  background-color: #b71c1c; /* Un rojo más oscuro al pasar el mouse */
+  background-color: #b71c1c; 
 }
+
 /* --- Estilos de Mi Cuenta --- */
 .cuenta-container {
   padding: 40px 20px;
@@ -359,7 +355,7 @@ body {
   border-radius: 10px;
   border: 1px solid #333;
   margin-bottom: 30px;
-  max-width: 400px; /* Tamaño contenido */
+  max-width: 400px; 
   margin-left: auto;
   margin-right: auto;
 }
@@ -389,7 +385,7 @@ body {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr); /* 7 días de la semana */
+  grid-template-columns: repeat(7, 1fr); 
   gap: 5px;
   text-align: center;
 }
@@ -406,7 +402,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%; /* Círculos */
+  border-radius: 50%; 
   font-size: 0.9rem;
   color: #ddd;
   position: relative;
@@ -425,14 +421,14 @@ body {
   border: 2px solid var(--primary-red);
 }
 
-/* Día Vacío (Relleno gris para días pasados sin asistencia - Opcional) */
+/* Día Vacío */
 .day-missed {
   color: #555;
 }
-/* --- ESTILOS DE LA SECCIÓN DE CONTACTO (NUEVO) --- */
 
+/* --- ESTILOS DE LA SECCIÓN DE CONTACTO --- */
 .contact-section {
-  background-color: #000; /* Fondo negro puro para continuidad */
+  background-color: #000; 
   color: white;
   padding: 60px 20px;
   display: flex;
@@ -441,11 +437,11 @@ body {
 
 .contact-content-wrapper {
   display: flex;
-  flex-wrap: wrap; /* Para que en celular se ponga uno abajo del otro */
+  flex-wrap: wrap; 
   max-width: 1100px;
   width: 100%;
   align-items: center;
-  gap: 50px; /* Espacio entre texto e imagen */
+  gap: 50px; 
 }
 
 /* Columna Izquierda: Info */
@@ -467,7 +463,7 @@ body {
 
 .contact-item {
   display: flex;
-  align-items: flex-start; /* Alineado arriba para textos largos */
+  align-items: flex-start; 
   margin-bottom: 20px;
   font-size: 1.1rem;
 }
@@ -475,7 +471,7 @@ body {
 .contact-item .icon {
   font-size: 1.5rem;
   margin-right: 15px;
-  color: var(--primary-red); /* Iconos rojos */
+  color: var(--primary-red); 
 }
 
 .contact-item a {
@@ -486,7 +482,7 @@ body {
 }
 
 .contact-item a:hover {
-  color: var(--primary-red); /* Al pasar el mouse se pone rojo */
+  color: var(--primary-red); 
 }
 
 .contact-item p {
@@ -519,7 +515,7 @@ body {
   max-width: 450px;
   border-radius: 10px;
   border: 2px solid #333;
-  box-shadow: 0 10px 30px rgba(211, 47, 47, 0.2); /* Sombra roja sutil */
+  box-shadow: 0 10px 30px rgba(211, 47, 47, 0.2); 
   transition: transform 0.3s;
 }
 
@@ -530,7 +526,7 @@ body {
 /* Ajuste para móviles */
 @media (max-width: 768px) {
   .contact-content-wrapper {
-    flex-direction: column-reverse; /* Primero imagen, luego texto en celular */
+    flex-direction: column-reverse; 
     text-align: center;
   }
   

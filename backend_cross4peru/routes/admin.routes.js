@@ -1,25 +1,19 @@
-// Archivo: backend_cross4peru/routes/admin.routes.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// 1. Listar Clientes con su estado actual
+// 1. Listar Clientes
 router.get('/admin/clientes', async (req, res) => {
     try {
-        // Seleccionamos usuarios que sean Socios (rol_id = 2)
-        // Y hacemos subconsultas para ver su último plan y estado
         const [clientes] = await db.query(`
             SELECT 
-                u.id, 
-                u.nombre_completo, 
-                u.correo, 
-                u.telefono,
-                (SELECT estado FROM Inscripciones WHERE usuario_id = u.id ORDER BY id DESC LIMIT 1) as estado_plan,
-                (SELECT nombre FROM Planes WHERE id = (SELECT plan_id FROM Inscripciones WHERE usuario_id = u.id ORDER BY id DESC LIMIT 1)) as nombre_plan,
-                (SELECT precio FROM Planes WHERE id = (SELECT plan_id FROM Inscripciones WHERE usuario_id = u.id ORDER BY id DESC LIMIT 1)) as precio_plan,
-                (SELECT id FROM Inscripciones WHERE usuario_id = u.id ORDER BY id DESC LIMIT 1) as inscripcion_id
-            FROM Usuarios u
-            WHERE u.rol_id = 2
+                c.id, c.nombre_completo, c.correo, c.telefono,
+                (SELECT estado FROM Inscripciones WHERE cliente_id = c.id ORDER BY id DESC LIMIT 1) as estado_plan,
+                (SELECT nombre FROM Planes WHERE id = (SELECT plan_id FROM Inscripciones WHERE cliente_id = c.id ORDER BY id DESC LIMIT 1)) as nombre_plan,
+                (SELECT precio FROM Planes WHERE id = (SELECT plan_id FROM Inscripciones WHERE cliente_id = c.id ORDER BY id DESC LIMIT 1)) as precio_plan,
+                (SELECT id FROM Inscripciones WHERE cliente_id = c.id ORDER BY id DESC LIMIT 1) as inscripcion_id
+            FROM Cliente c
+            WHERE c.rol_id = 2
         `);
         res.json(clientes);
     } catch (error) {
@@ -31,19 +25,20 @@ router.get('/admin/clientes', async (req, res) => {
 // 2. Registrar Pago en Efectivo (Manual)
 router.post('/admin/pagos/efectivo', async (req, res) => {
     try {
-        const { usuario_id, inscripcion_id, monto } = req.body;
+        const { cliente_id, inscripcion_id, monto } = req.body;
+        const TIPO_PAGO_EFECTIVO = 2; // ID 2 = Efectivo
 
         if (!inscripcion_id) {
-            return res.status(400).json({ mensaje: 'El usuario no tiene una inscripción para pagar.' });
+            return res.status(400).json({ mensaje: 'El usuario no tiene inscripción.' });
         }
 
-        // A. Insertar el Pago en BD como 'efectivo'
-        const [pago] = await db.query(
-            "INSERT INTO Pagos (usuario_id, inscripcion_id, monto, metodo_pago, codigo_transaccion, estado) VALUES (?, ?, ?, 'efectivo', 'PAGO-FISICO', 'exitoso')",
-            [usuario_id, inscripcion_id, monto]
+        // Insertar en BOLETA (Antes Pagos)
+        const [boleta] = await db.query(
+            "INSERT INTO Boleta (cliente_id, inscripcion_id, monto, tipo_pago_id, codigo_transaccion, estado) VALUES (?, ?, ?, ?, 'PAGO-FISICO', 'exitoso')",
+            [cliente_id, inscripcion_id, monto, TIPO_PAGO_EFECTIVO]
         );
 
-        // B. Activar la inscripción (+30 días desde HOY o desde la fecha programada)
+        // Activar Inscripción
         await db.query(`
             UPDATE Inscripciones 
             SET estado = 'activo', 
@@ -51,14 +46,14 @@ router.post('/admin/pagos/efectivo', async (req, res) => {
             WHERE id = ?
         `, [inscripcion_id]);
 
-        // C. Generar Comprobante (Físico)
-        const correlativo = String(pago.insertId).padStart(7, '0');
+        // Insertar DETALLE BOLETA (Antes Comprobantes)
+        const correlativo = String(boleta.insertId).padStart(7, '0');
         await db.query(
-            "INSERT INTO Comprobantes (pago_id, serie, numero_correlativo, ruc_dni_cliente) VALUES (?, ?, ?, ?)",
-            [pago.insertId, 'F001', correlativo, '99999999'] 
+            "INSERT INTO Detalle_Boleta (boleta_id, serie, numero_boleta) VALUES (?, ?, ?)",
+            [boleta.insertId, 'F001', correlativo]
         );
 
-        res.json({ mensaje: 'Pago en efectivo registrado y plan activado.' });
+        res.json({ mensaje: 'Pago en efectivo registrado.' });
 
     } catch (error) {
         console.error(error);
@@ -66,30 +61,25 @@ router.post('/admin/pagos/efectivo', async (req, res) => {
     }
 });
 
-// 3. Marcar Asistencia Manual (Por el Admin) - Acepta fecha específica
+// 3. Marcar Asistencia Manual
 router.post('/admin/asistencia', async (req, res) => {
     try {
-        // Ahora recibimos la FECHA también
-        const { usuario_id, fecha } = req.body; 
-        
-        // Si no mandan fecha, usamos la de hoy. Si mandan, usamos esa.
+        const { cliente_id, fecha } = req.body;
         const fechaRegistro = fecha || new Date().toISOString().split('T')[0];
-        const horaRegistro = new Date().toLocaleTimeString('es-PE', { hour12: false });
 
-        // Evitar duplicados en el mismo día
         const [existente] = await db.query(
-            "SELECT id FROM asistencias WHERE usuario_id = ? AND fecha = ?", 
-            [usuario_id, fechaRegistro]
+            "SELECT id FROM Asistencias WHERE cliente_id = ? AND fecha = ?", 
+            [cliente_id, fechaRegistro]
         );
 
         if (existente.length > 0) {
-            return res.status(400).json({ mensaje: 'Este usuario ya tiene asistencia marcada en esa fecha.' });
+            return res.status(400).json({ mensaje: 'Ya tiene asistencia marcada hoy.' });
         }
 
-        await db.query(`
-            INSERT INTO asistencias (usuario_id, fecha, hora_entrada, estado) 
-            VALUES (?, ?, ?, 'asistio')
-        `, [usuario_id, fechaRegistro, horaRegistro]);
+        await db.query(
+            "INSERT INTO Asistencias (cliente_id, fecha, hora_entrada, estado) VALUES (?, ?, CURRENT_TIME, 'asistio')", 
+            [cliente_id, fechaRegistro]
+        );
         
         res.json({ mensaje: 'Asistencia registrada ✅' });
     } catch (error) {
@@ -98,19 +88,19 @@ router.post('/admin/asistencia', async (req, res) => {
     }
 });
 
-// 4. (NUEVO) Obtener historial de asistencia de UN usuario para el Admin
-router.get('/admin/historial/:usuario_id', async (req, res) => {
+// 4. Historial Admin
+router.get('/admin/historial/:cliente_id', async (req, res) => {
     try {
-        const { usuario_id } = req.params;
+        const { cliente_id } = req.params;
         const [historial] = await db.query(`
             SELECT id, fecha, hora_entrada, estado 
-            FROM asistencias 
-            WHERE usuario_id = ? 
+            FROM Asistencias 
+            WHERE cliente_id = ? 
             ORDER BY fecha DESC
-        `, [usuario_id]);
+        `, [cliente_id]);
         res.json(historial);
     } catch (error) {
-        res.status(500).json({ mensaje: 'Error al cargar historial' });
+        res.status(500).json({ mensaje: 'Error historial' });
     }
 });
 

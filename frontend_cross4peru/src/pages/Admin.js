@@ -31,13 +31,11 @@ const Admin = () => {
 
     useEffect(() => { fetchClientes(); }, [fetchClientes]);
 
-    // Función para abrir/cerrar detalles de un usuario
     const toggleRow = async (userId) => {
         if (expandedUserId === userId) {
-            setExpandedUserId(null); // Cerrar si ya está abierto
+            setExpandedUserId(null); 
         } else {
-            setExpandedUserId(userId); // Abrir
-            // Cargar historial de ese usuario específico
+            setExpandedUserId(userId); 
             try {
                 const res = await axios.get(`http://localhost:3001/api/admin/historial/${userId}`);
                 setUserHistory(res.data);
@@ -45,18 +43,16 @@ const Admin = () => {
         }
     };
 
-    // Función: Admin marca asistencia en una fecha específica
     const handleAdminMark = async (userId, dateString) => {
         const confirmar = window.confirm(`¿Marcar asistencia para el ${dateString}?`);
         if (!confirmar) return;
 
         try {
             await axios.post('http://localhost:3001/api/admin/asistencia', { 
-                usuario_id: userId,
+                cliente_id: userId,
                 fecha: dateString
             });
             alert("Asistencia Agregada ✅");
-            // Recargar historial
             const res = await axios.get(`http://localhost:3001/api/admin/historial/${userId}`);
             setUserHistory(res.data);
         } catch (error) {
@@ -71,7 +67,7 @@ const Admin = () => {
 
         try {
             await axios.post('http://localhost:3001/api/admin/pagos/efectivo', {
-                usuario_id: cliente.id,
+                cliente_id: cliente.id,
                 inscripcion_id: cliente.inscripcion_id,
                 monto: cliente.precio_plan
             });
@@ -80,7 +76,6 @@ const Admin = () => {
         } catch (error) { alert("Error al registrar pago."); }
     };
 
-    // --- RENDERIZADO DEL CALENDARIO (Reutilizable para cada fila) ---
     const renderAdminCalendar = (userId) => {
         const year = calendarDate.getFullYear();
         const month = calendarDate.getMonth();
@@ -126,7 +121,6 @@ const Admin = () => {
         );
     };
 
-    // --- ESTILOS ---
     const containerStyle = { padding: '40px', color: 'white', maxWidth: '1200px', margin: '0 auto' };
     const tableStyle = { width: '100%', borderCollapse: 'collapse', marginTop: '20px', background: '#1e1e1e', borderRadius: '10px' };
     const thStyle = { background: '#000', padding: '15px', textAlign: 'left', color: '#aaa', borderBottom: '2px solid var(--primary-red)' };
@@ -173,12 +167,10 @@ const Admin = () => {
                                         </button>
                                     )}
                                 </td>
-                                {/* AQUÍ ESTABA EL ERROR: Se eliminó el estilo duplicado */}
                                 <td onClick={() => toggleRow(cli.id)} style={{...tdStyle, cursor:'pointer', textAlign:'center'}}>
                                     {expandedUserId === cli.id ? '▲' : '▼'}
                                 </td>
                             </tr>
-                            {/* FILA EXPANDIBLE (CALENDARIO) */}
                             {expandedUserId === cli.id && (
                                 <tr>
                                     <td colSpan="5" style={{padding:'20px', background:'#222', borderBottom:'1px solid #333'}}>

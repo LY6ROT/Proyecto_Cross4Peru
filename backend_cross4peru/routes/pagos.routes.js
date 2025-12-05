@@ -1,34 +1,35 @@
+// Archivo: backend_cross4peru/routes/pagos.routes.js
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// 1. OBTENER HISTORIAL DE PAGOS Y PLANES PENDIENTES
-router.get('/pagos/:usuario_id', async (req, res) => {
+// 1. OBTENER HISTORIAL DE BOLETAS Y PLANES PENDIENTES
+router.get('/pagos/:cliente_id', async (req, res) => {
     try {
-        const { usuario_id } = req.params;
+        const { cliente_id } = req.params;
 
-        // A. Buscar si tiene alguna inscripción pendiente de pago
-        // (Corregido: tablas en minúsculas)
+        // A. Inscripciones pendientes
         const [pendientes] = await db.query(`
             SELECT i.id, i.fecha_inicio_programada, p.nombre, p.precio, p.id as plan_id
-            FROM inscripciones i
-            JOIN planes p ON i.plan_id = p.id
-            WHERE i.usuario_id = ? AND i.estado = 'pendiente_pago'
+            FROM Inscripciones i
+            JOIN Planes p ON i.plan_id = p.id
+            WHERE i.cliente_id = ? AND i.estado = 'pendiente_pago'
             LIMIT 1
-        `, [usuario_id]);
+        `, [cliente_id]);
 
-        // B. Buscar historial de pagos exitosos
-        // (Corregido: tablas en minúsculas)
+        // B. Historial de Boletas (JOIN con Tipo_De_Pago y Detalle_Boleta)
         const [historial] = await db.query(`
-            SELECT pg.id, pg.monto, pg.fecha_pago, pg.codigo_transaccion, pg.metodo_pago,
-                   c.serie, c.numero_correlativo, p.nombre as nombre_plan
-            FROM pagos pg
-            JOIN inscripciones i ON pg.inscripcion_id = i.id
-            JOIN planes p ON i.plan_id = p.id
-            LEFT JOIN comprobantes c ON c.pago_id = pg.id
-            WHERE pg.usuario_id = ? AND pg.estado = 'exitoso'
-            ORDER BY pg.fecha_pago DESC
-        `, [usuario_id]);
+            SELECT b.id, b.monto, b.fecha_emision as fecha_pago, b.codigo_transaccion, 
+                   tp.nombre as metodo_pago,
+                   db.serie, db.numero_boleta as numero_correlativo, p.nombre as nombre_plan
+            FROM Boleta b
+            JOIN Inscripciones i ON b.inscripcion_id = i.id
+            JOIN Planes p ON i.plan_id = p.id
+            JOIN Tipo_De_Pago tp ON b.tipo_pago_id = tp.id
+            LEFT JOIN Detalle_Boleta db ON db.boleta_id = b.id
+            WHERE b.cliente_id = ? AND b.estado = 'exitoso'
+            ORDER BY b.fecha_emision DESC
+        `, [cliente_id]);
 
         res.json({
             pendiente: pendientes.length > 0 ? pendientes[0] : null,
@@ -41,27 +42,29 @@ router.get('/pagos/:usuario_id', async (req, res) => {
     }
 });
 
-// 2. CREAR UNA NUEVA INSCRIPCIÓN
+// 2. CREAR INSCRIPCIÓN (Recibe usuario_id del frontend, lo usamos como cliente_id)
 router.post('/inscripciones', async (req, res) => {
     try {
         const { usuario_id, plan_id, fecha_inicio } = req.body;
+        // Mapeamos usuario_id (frontend) -> cliente_id (base de datos)
+        const cliente_id = usuario_id; 
 
         const [existente] = await db.query(
-            "SELECT id FROM inscripciones WHERE usuario_id = ? AND estado = 'pendiente_pago'", 
-            [usuario_id]
+            "SELECT id FROM Inscripciones WHERE cliente_id = ? AND estado = 'pendiente_pago'", 
+            [cliente_id]
         );
 
         if (existente.length > 0) {
             await db.query(
-                "UPDATE inscripciones SET plan_id = ?, fecha_inicio_programada = ? WHERE id = ?",
+                "UPDATE Inscripciones SET plan_id = ?, fecha_inicio_programada = ? WHERE id = ?",
                 [plan_id, fecha_inicio, existente[0].id]
             );
             return res.json({ mensaje: 'Inscripción actualizada', inscripcion_id: existente[0].id });
         }
 
         const [result] = await db.query(
-            "INSERT INTO inscripciones (usuario_id, plan_id, fecha_inicio_programada, estado) VALUES (?, ?, ?, 'pendiente_pago')",
-            [usuario_id, plan_id, fecha_inicio]
+            "INSERT INTO Inscripciones (cliente_id, plan_id, fecha_inicio_programada, estado) VALUES (?, ?, ?, 'pendiente_pago')",
+            [cliente_id, plan_id, fecha_inicio]
         );
 
         res.json({ mensaje: 'Inscripción creada', inscripcion_id: result.insertId });
@@ -72,38 +75,43 @@ router.post('/inscripciones', async (req, res) => {
     }
 });
 
-// 3. PROCESAR EL PAGO
+// 3. PROCESAR PAGO (WEB)
 router.post('/pagos/procesar', async (req, res) => {
     try {
-        const { usuario_id, inscripcion_id, monto, metodo_pago, tarjeta } = req.body;
+        const { usuario_id, inscripcion_id, monto, tarjeta } = req.body;
+        const cliente_id = usuario_id;
+        
+        // Pago WEB siempre es TARJETA (ID 1 en tabla Tipo_De_Pago)
+        const TIPO_PAGO_TARJETA = 1;
 
         const esExitoso = !tarjeta.numero.endsWith('0000'); 
         const estadoPago = esExitoso ? 'exitoso' : 'fallido';
         const codigoTrx = 'TRX-' + Date.now();
 
-        // (Corregido: INSERT en tabla 'pagos' minúscula)
-        const [pagoResult] = await db.query(
-            "INSERT INTO pagos (usuario_id, inscripcion_id, monto, metodo_pago, codigo_transaccion, estado) VALUES (?, ?, ?, ?, ?, ?)",
-            [usuario_id, inscripcion_id, monto, metodo_pago, codigoTrx, estadoPago]
+        // Insertar en BOLETA
+        const [boletaResult] = await db.query(
+            "INSERT INTO Boleta (cliente_id, inscripcion_id, monto, tipo_pago_id, codigo_transaccion, estado) VALUES (?, ?, ?, ?, ?, ?)",
+            [cliente_id, inscripcion_id, monto, TIPO_PAGO_TARJETA, codigoTrx, estadoPago]
         );
 
         if (!esExitoso) {
             return res.status(400).json({ mensaje: 'La transacción fue rechazada por el banco.' });
         }
 
+        // Activar Plan
         await db.query(`
-            UPDATE inscripciones 
+            UPDATE Inscripciones 
             SET estado = 'activo', fecha_fin = DATE_ADD(fecha_inicio_programada, INTERVAL 30 DAY)
             WHERE id = ?
         `, [inscripcion_id]);
 
         const serie = 'B001';
-        const correlativo = String(pagoResult.insertId).padStart(7, '0');
+        const correlativo = String(boletaResult.insertId).padStart(7, '0');
 
-        // (Corregido: INSERT en tabla 'comprobantes' minúscula)
+        // Insertar en DETALLE_BOLETA (Sin DNI)
         await db.query(
-            "INSERT INTO comprobantes (pago_id, serie, numero_correlativo, ruc_dni_cliente) VALUES (?, ?, ?, ?)",
-            [pagoResult.insertId, serie, correlativo, '00000000']
+            "INSERT INTO Detalle_Boleta (boleta_id, serie, numero_boleta) VALUES (?, ?, ?)",
+            [boletaResult.insertId, serie, correlativo]
         );
 
         res.json({ 

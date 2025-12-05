@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // <--- CORRECCIÓN 1: Importación directa
+import autoTable from 'jspdf-autotable'; 
 import '../App.css';
 
 const Pagos = () => {
@@ -61,7 +61,7 @@ const Pagos = () => {
         setTarjeta({ ...tarjeta, numero: valor });
     };
 
-    // --- FUNCIÓN GENERAR PDF CORREGIDA ---
+    // --- FUNCIÓN GENERAR PDF ---
     const generarBoletaPDF = (pago) => {
         const doc = new jsPDF();
 
@@ -81,7 +81,7 @@ const Pagos = () => {
         doc.text(`Serie: ${pago.serie}-${pago.numero_correlativo}`, 140, 45);
         doc.text(`Pago: ${pago.metodo_pago ? pago.metodo_pago.toUpperCase() : 'TARJETA'}`, 140, 52);
 
-        // 3. Tabla (CORRECCIÓN 2: Usamos la función importada directamente)
+        // 3. Tabla
         autoTable(doc, {
             startY: 60,
             head: [['Descripción', 'Monto Total']],
@@ -93,7 +93,6 @@ const Pagos = () => {
         });
 
         // 4. Pie de página
-        // Usamos lastAutoTable con seguridad
         const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 80;
         
         doc.setFontSize(10);
@@ -115,13 +114,13 @@ const Pagos = () => {
 
         try {
             await axios.post('http://localhost:3001/api/inscripciones', {
-                usuario_id: user.id,
+                usuario_id: user.id, // CORREGIDO: Backend 'pagos.routes.js' espera usuario_id
                 plan_id: pendiente.plan_id,
                 fecha_inicio: fechaFinal
             });
 
             const res = await axios.post('http://localhost:3001/api/pagos/procesar', {
-                usuario_id: user.id,
+                usuario_id: user.id, // CORREGIDO: Backend 'pagos.routes.js' espera usuario_id
                 inscripcion_id: pendiente.id,
                 monto: pendiente.precio,
                 metodo_pago: 'tarjeta',
@@ -153,31 +152,8 @@ const Pagos = () => {
     });
 
     const inputStyle = { width: '100%', padding: '12px', margin: '8px 0', background: '#2a2a2a', color: 'white', border: '1px solid #444', borderRadius: '5px' };
-    
-    const btnStyle = { 
-        background: 'var(--primary-red)', 
-        color: 'white', 
-        border: 'none', 
-        padding: '15px', 
-        cursor: 'pointer', 
-        borderRadius: '5px', 
-        fontWeight: 'bold', 
-        width: '100%', 
-        fontSize: '1.1rem', 
-        marginTop: '15px' 
-    };
-    
-    const btnDescargarStyle = {
-        background: 'transparent',
-        border: '1px solid var(--primary-red)',
-        color: 'var(--primary-red)',
-        padding: '5px 15px',
-        borderRadius: '5px',
-        cursor: 'pointer',
-        fontSize: '0.85rem',
-        fontWeight: 'bold',
-        transition: 'all 0.2s'
-    };
+    const btnStyle = { background: 'var(--primary-red)', color: 'white', border: 'none', padding: '15px', cursor: 'pointer', borderRadius: '5px', fontWeight: 'bold', width: '100%', fontSize: '1.1rem', marginTop: '15px' };
+    const btnDescargarStyle = { background: 'transparent', border: '1px solid var(--primary-red)', color: 'var(--primary-red)', padding: '5px 15px', borderRadius: '5px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold', transition: 'all 0.2s' };
 
     if (loading) return <div style={{color:'white', textAlign:'center', marginTop:'50px'}}>Cargando...</div>;
 
